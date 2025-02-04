@@ -13,30 +13,30 @@ h2 {
 }
 
 .app__container {
-    @apply flex items-start justify-center gap-8;
+    @apply grid grid-cols-2 gap-8 items-start;
 }
 
 .SchemaOutput {
-    @apply rounded-xl py-6 px-10 bg-white text-xs text-left;
+    @apply rounded-xl py-6 px-10 bg-white text-xs text-left overflow-hidden text-clip;
 }
 
 form {
-    @apply rounded-xl p-6 bg-white;
+    @apply rounded-xl p-6 bg-white text-sm;
 }
 
 .inputForm__div {
-    @apply p-2 ;
+    @apply py-2;
 }
 
 
 .inputFormdiv__author {
-    @apply border border-gray-200 p-3 rounded-sm;
+    @apply border border-gray-200 p-3 my-5 rounded-sm;
 }
 
 input {
-    @apply bg-gray-100 rounded-sm p-3 mx-3;
+    @apply bg-gray-100 rounded-sm p-2 mx-3 w-full;
 }
 
 select {
-    @apply border border-gray-100 p-3 mx-3 rounded-sm;
+    @apply border border-gray-100 p-2 mx-3 rounded-sm;
 }

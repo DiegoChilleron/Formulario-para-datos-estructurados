@@ -80,7 +80,7 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
         ></input>
       </div>
 
-      <div className="inputForm__div">
+      <div className="inputForm__div flex">
         <label htmlFor="datePublished">Fecha de publicación:</label>
         <input
           type ="datetime-local"
@@ -90,9 +90,7 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
           onChange={onInputChange}
           placeholder="Ingrese la fecha de publicación"
         ></input>
-      </div>
-
-      <div className="inputForm__div">
+     
         <label htmlFor="dateModified">Fecha de modificación:</label>
         <input
           type ="datetime-local"

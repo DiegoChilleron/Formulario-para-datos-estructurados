@@ -11,20 +11,6 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
   const { url, type, titulo, descripcion, datePublished, dateModified, seccion, urlImagen, authorType, authorName, authorURL, authorRRSS } = formData;
 
   // Se define el schema del author según el tipo seleccionado
-  const authorSchema =
-    authorType === "Person"
-      ? `{
-                "@type": "Person",
-                "name": "${authorName || "Autor Anónimo"}",
-                "url": "${authorURL || "https://neuronup.com/author/author/"}"
-                ${authorRRSS ? `"sameAs": "${authorRRSS}"` : ""}
-              },`
-      : `{
-                "@type": "Organization",
-                "name": "${authorName || "NeuronUP"}",
-                "url": "${authorURL || "https://neuronup.com/author/inigo/"}"
-              },`;
-
 
   const schema = `
 <script type="application/ld+json">
@@ -49,7 +35,12 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
         "width": ${imageDimensions ? imageDimensions.width : 1200},
         "height": ${imageDimensions ? imageDimensions.height : 675}
       },
-      "author": ${authorSchema}
+      "author": {
+        "@type": "${authorType || "Organization"}",
+        "name": "${authorName || "NeuronUP"}",
+        "url": "${authorURL || "https://neuronup.com/author/inigo/"}"${authorRRSS ? `,
+        "sameAs": "${authorRRSS}"` : "" }
+        },
       "publisher": {
         "@type": "Organization",
         "name": "NeuronUP",
