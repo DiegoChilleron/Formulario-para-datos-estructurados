@@ -1,33 +1,37 @@
-// InputForm.tsx
-import { ChangeEvent } from "react";
+
+import { ChangeEvent, useCallback } from "react";
 import { FormData } from "../../App";
 
 interface InputFormProps {
   formData: FormData;
   onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  // Se pasará null si no se pudo obtener la imagen o las dimensiones reales
+  // Recibirá null si no se pudo obtener la imagen o sus dimensiones reales
   onImageLoad: (dimensions: { width: number; height: number } | null) => void;
+
+  // Función para actualizar el array de dateModified
+  onDateModifiedChange: (newDates: string[]) => void;
 }
 
-export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, onImageLoad }) => {
+export const InputForm: React.FC<InputFormProps> = ({ 
+  formData, 
+  onInputChange, 
+  onImageLoad, 
+  onDateModifiedChange
+}) => {
 
-  const handleImageBlur = () => {
+  // Comprueba la URL de la imagen y obtiene sus dimensiones reales
+  const handleImageBlur = useCallback(() => {
     if (!formData.urlImagen) {
       onImageLoad(null);
       return;
     }
-
     const img = new Image();
     img.src = formData.urlImagen;
-    img.onload = () => {
-      // Al cargar la imagen se actualizan las dimensiones reales
-      onImageLoad({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.onerror = () => {
-      // Si no se puede cargar la imagen, se establece null
-      onImageLoad(null);
-    };
-  };
+    img.onload = () => onImageLoad({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => onImageLoad(null);
+  }, [formData.urlImagen, onImageLoad]);
+
+
 
   return (
     <form>
@@ -45,12 +49,7 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
 
       <div className="inputForm__div">
         <label htmlFor="type">Tipo:</label>
-        <select
-          id="type"
-          name="type"
-          value={formData.type}
-          onChange={onInputChange}
-        >
+        <select id="type" name="type" value={formData.type} onChange={onInputChange}>
           <option value="Article">Article</option>
           <option value="NewsArticle">NewsArticle</option>
           <option value="BlogPosting">BlogPosting</option>
@@ -72,34 +71,59 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
       <div className="inputForm__div">
         <label htmlFor="descripcion">Descripción:</label>
         <input
+          type="text"
           id="descripcion"
           name="descripcion"
           value={formData.descripcion}
           onChange={onInputChange}
           placeholder="Ingrese la descripción"
-        ></input>
+        />
       </div>
 
-      <div className="inputForm__div flex">
+      <div className="inputForm__div">
         <label htmlFor="datePublished">Fecha de publicación:</label>
         <input
-          type ="datetime-local"
+          type="datetime-local"
           id="datePublished"
           name="datePublished"
           value={formData.datePublished}
           onChange={onInputChange}
           placeholder="Ingrese la fecha de publicación"
-        ></input>
-     
-        <label htmlFor="dateModified">Fecha de modificación:</label>
-        <input
-          type ="datetime-local"
-          id="dateModified"
-          name="dateModified"
-          value={formData.dateModified}
-          onChange={onInputChange}
-          placeholder="Ingrese la fecha de modificacióm"
-        ></input>
+        />
+      </div>
+
+      {/* Sección para manejar uno o varios dateModified */}
+      <div className="inputForm__div">
+        <label>Fechas de modificación:</label>
+        {formData.dateModified.map((date, index) => (
+          <div key={index} style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+            <input
+              type="datetime-local"
+              value={date}
+              onChange={(e) => {
+                const newDates = [...formData.dateModified];
+                newDates[index] = e.target.value;
+                onDateModifiedChange(newDates);
+              }}
+              placeholder="Ingrese la fecha de modificación"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const newDates = formData.dateModified.filter((_, i) => i !== index);
+                onDateModifiedChange(newDates);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => onDateModifiedChange([...formData.dateModified, ""])}
+        >
+          Añadir fecha de modificación
+        </button>
       </div>
 
       <div className="inputForm__div">
@@ -130,12 +154,7 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
       <div className="inputFormdiv__author">
         <div className="inputForm__div">
           <label htmlFor="authorType">Tipo de Autor:</label>
-          <select
-            id="authorType"
-            name="authorType"
-            value={formData.authorType}
-            onChange={onInputChange}
-          >
+          <select id="authorType" name="authorType" value={formData.authorType} onChange={onInputChange}>
             <option value="Organization">Organization</option>
             <option value="Person">Person</option>
           </select>
@@ -180,5 +199,3 @@ export const InputForm: React.FC<InputFormProps> = ({ formData, onInputChange, o
     </form>
   );
 };
-
-
