@@ -42,5 +42,5 @@ select {
 }
 
 button {
-    @apply border border-gray-400 rounded-lg p-1 mx-3;
+    @apply border border-gray-400 rounded-lg p-1 mx-3 hover:bg-gray-700 hover:text-white;
 }
