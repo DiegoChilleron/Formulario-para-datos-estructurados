@@ -1,25 +1,25 @@
-
-import { ChangeEvent, useCallback } from "react";
+// components/Form/InputForm.tsx
+import { ChangeEvent, useCallback, useEffect } from "react";
 import { FormData } from "../../App";
 
 interface InputFormProps {
   formData: FormData;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  // Recibirá null si no se pudo obtener la imagen o sus dimensiones reales
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
   onImageLoad: (dimensions: { width: number; height: number } | null) => void;
-
-  // Función para actualizar el array de dateModified
   onDateModifiedChange: (newDates: string[]) => void;
+  onAuthorRRSSChange: (newRRSS: string[]) => void;
 }
 
-export const InputForm: React.FC<InputFormProps> = ({ 
-  formData, 
-  onInputChange, 
-  onImageLoad, 
-  onDateModifiedChange
+export const InputForm: React.FC<InputFormProps> = ({
+  formData,
+  onInputChange,
+  onImageLoad,
+  onDateModifiedChange,
+  onAuthorRRSSChange,
 }) => {
-
-  // Comprueba la URL de la imagen y obtiene sus dimensiones reales
+  // Obtiene las dimensiones reales de la imagen al salir del campo (onBlur)
   const handleImageBlur = useCallback(() => {
     if (!formData.urlImagen) {
       onImageLoad(null);
@@ -27,11 +27,25 @@ export const InputForm: React.FC<InputFormProps> = ({
     }
     const img = new Image();
     img.src = formData.urlImagen;
-    img.onload = () => onImageLoad({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onload = () =>
+      onImageLoad({ width: img.naturalWidth, height: img.naturalHeight });
     img.onerror = () => onImageLoad(null);
   }, [formData.urlImagen, onImageLoad]);
 
-
+  // Extrae el último slug de la URL, reemplaza guiones por espacios y capitaliza solo la primera letra de la frase
+  useEffect(() => {
+    const urlParts = formData.url.split("/").filter(part => part !== "");
+    const lastSlug = urlParts[urlParts.length - 2] || "";
+    if (lastSlug) {
+      const formattedSlug = lastSlug
+        .split("-")
+        .join(" ");
+      const capitalizedSlug = formattedSlug.charAt(0).toUpperCase() + formattedSlug.slice(1);
+      onInputChange({
+        target: { name: "seccion", value: capitalizedSlug }
+      } as ChangeEvent<HTMLInputElement>);
+    }
+  }, [formData.url, onInputChange]);
 
   return (
     <form>
@@ -43,7 +57,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           name="url"
           value={formData.url}
           onChange={onInputChange}
-          placeholder="Ingrese la URL de la página"
+          placeholder="Introduce la URL de la página"
         />
       </div>
 
@@ -64,7 +78,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           name="titulo"
           value={formData.titulo}
           onChange={onInputChange}
-          placeholder="Ingrese el título"
+          placeholder="Introduce el título"
         />
       </div>
 
@@ -76,7 +90,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           name="descripcion"
           value={formData.descripcion}
           onChange={onInputChange}
-          placeholder="Ingrese la descripción"
+          placeholder="Introduce la descripción"
         />
       </div>
 
@@ -88,15 +102,18 @@ export const InputForm: React.FC<InputFormProps> = ({
           name="datePublished"
           value={formData.datePublished}
           onChange={onInputChange}
-          placeholder="Ingrese la fecha de publicación"
+          placeholder="Introduce la fecha de publicación"
         />
       </div>
 
-      {/* Sección para manejar uno o varios dateModified */}
+      {/* Sección para gestionar una o varias fechas de modificación */}
       <div className="inputForm__div">
         <label>Fechas de modificación:</label>
         {formData.dateModified.map((date, index) => (
-          <div key={index} style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+          <div
+            key={index}
+            style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}
+          >
             <input
               type="datetime-local"
               value={date}
@@ -105,7 +122,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                 newDates[index] = e.target.value;
                 onDateModifiedChange(newDates);
               }}
-              placeholder="Ingrese la fecha de modificación"
+              placeholder="Introduce la fecha de modificación"
             />
             <button
               type="button"
@@ -134,7 +151,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           name="seccion"
           value={formData.seccion}
           onChange={onInputChange}
-          placeholder="Ingrese la sección"
+          placeholder="Introduce la sección"
         />
       </div>
 
@@ -147,14 +164,19 @@ export const InputForm: React.FC<InputFormProps> = ({
           value={formData.urlImagen}
           onChange={onInputChange}
           onBlur={handleImageBlur}
-          placeholder="Ingrese la URL de la imagen"
+          placeholder="Introduce la URL de la imagen"
         />
       </div>
 
       <div className="inputFormdiv__author">
         <div className="inputForm__div">
           <label htmlFor="authorType">Tipo de Autor:</label>
-          <select id="authorType" name="authorType" value={formData.authorType} onChange={onInputChange}>
+          <select
+            id="authorType"
+            name="authorType"
+            value={formData.authorType}
+            onChange={onInputChange}
+          >
             <option value="Organization">Organization</option>
             <option value="Person">Person</option>
           </select>
@@ -168,7 +190,7 @@ export const InputForm: React.FC<InputFormProps> = ({
             name="authorName"
             value={formData.authorName}
             onChange={onInputChange}
-            placeholder="Ingrese el nombre del autor"
+            placeholder="Introduce el nombre del autor"
           />
         </div>
 
@@ -180,20 +202,45 @@ export const InputForm: React.FC<InputFormProps> = ({
             name="authorURL"
             value={formData.authorURL}
             onChange={onInputChange}
-            placeholder="Ingrese la URL del autor"
+            placeholder="Introduce la URL del autor"
           />
         </div>
 
+        {/* Sección para gestionar uno o varios perfiles de redes sociales */}
         <div className="inputForm__div">
-          <label htmlFor="authorRRSS">RRSS del autor:</label>
-          <input
-            type="text"
-            id="authorRRSS"
-            name="authorRRSS"
-            value={formData.authorRRSS}
-            onChange={onInputChange}
-            placeholder="Ingrese el perfil de redes sociales del autor"
-          />
+          <label>RRSS del autor:</label>
+          {formData.authorRRSS.map((rrss, index) => (
+            <div
+              key={index}
+              style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}
+            >
+              <input
+                type="text"
+                value={rrss}
+                onChange={(e) => {
+                  const newRRSS = [...formData.authorRRSS];
+                  newRRSS[index] = e.target.value;
+                  onAuthorRRSSChange(newRRSS);
+                }}
+                placeholder="Introduce el perfil de red social del autor"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const newRRSS = formData.authorRRSS.filter((_, i) => i !== index);
+                  onAuthorRRSSChange(newRRSS);
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onAuthorRRSSChange([...formData.authorRRSS, ""])}
+          >
+            Añadir RRSS
+          </button>
         </div>
       </div>
     </form>

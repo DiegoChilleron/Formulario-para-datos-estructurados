@@ -1,13 +1,27 @@
-// SchemaOutput.tsx
-import React from "react";
 import { FormData, ImageDimensions } from "../../App";
 
-interface SchemaOutputProps {
-  formData: FormData;
-  imageDimensions: ImageDimensions | null;
+export interface SchemaLabels {
+  urlPlaceholder: string;
+  imageLogoPlaceholder: string;
+  telephonePlaceholder: string[];
+  availableLanguage: string[];
 }
 
-export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimensions }) => {
+export interface BaseSchemaOutputProps {
+  formData: FormData;
+  imageDimensions: ImageDimensions | null;
+  language: string;
+  labels: SchemaLabels;
+  header: string;
+}
+
+export const BaseSchemaOutput: React.FC<BaseSchemaOutputProps> = ({
+  formData,
+  imageDimensions,
+  language,
+  labels,
+  header
+}) => {
   const {
     url,
     type,
@@ -23,32 +37,39 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
     authorRRSS
   } = formData;
 
-  // Valores por defecto y formateo
   const articleType = type || "Article";
-  const publishedDate = datePublished ? datePublished + ":00+01:00" : "### FECHA PUBLICACION ###";
-  
-  // Se procesan las fechas de modificación agregando el sufijo
-  const modifiedDates = dateModified.length
-    ? dateModified
-        .filter((d) => d) // Se ignoran entradas vacías
-        .map((d) => d + ":00+01:00")
-    : undefined;
+  const publishedDate = datePublished
+    ? `${datePublished}:00+01:00`
+    : "";
+
+  const modifiedDates =
+    dateModified.length > 0
+      ? dateModified.filter(d => d).map(d => `${d}:00+01:00`)
+      : undefined;
 
   const imageObject = {
     "@type": "ImageObject",
-    url: urlImagen || "### URL IMAGEN ###",
+    url: urlImagen || "",
     width: imageDimensions ? imageDimensions.width : 1200,
     height: imageDimensions ? imageDimensions.height : 675
   };
+
+
+  const filteredRRSS = authorRRSS.filter(a => a);
+  const sameAs =
+    filteredRRSS.length > 0
+      ? filteredRRSS.length === 1
+        ? filteredRRSS[0]
+        : filteredRRSS
+      : undefined;
 
   const author = {
     "@type": authorType || "Organization",
     name: authorName || "NeuronUP",
     url: authorURL || "https://neuronup.com/author/inigo/",
-    ...(authorRRSS && { sameAs: authorRRSS })
+    ...(sameAs && { sameAs })
   };
 
-  // Se arma el objeto schema; se incluye dateModified solo si existen fechas válidas
   const schemaObject: any = {
     "@context": "https://schema.org",
     "@graph": [
@@ -56,14 +77,15 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
         "@type": articleType,
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": url || "### URL ###"
+          "@id": url || labels.urlPlaceholder
         },
-        headline: titulo || "### TITULO ###",
-        description: descripcion || "### DESCRIPCION ###",
+        headline: titulo || "",
+        description: descripcion || "",
         datePublished: publishedDate,
-        ...(modifiedDates && modifiedDates.length > 0 && { dateModified: modifiedDates }),
-        articleSection: seccion || "### SECCION ###",
-        inLanguage: "es",
+        ...(modifiedDates &&
+          modifiedDates.length > 0 && { dateModified: modifiedDates }),
+        articleSection: seccion || "",
+        inLanguage: language,
         image: imageObject,
         author: author,
         publisher: {
@@ -71,13 +93,13 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
           name: "NeuronUP",
           logo: {
             "@type": "ImageObject",
-            url: "https://neuronup.com/wp-content/uploads/2022/02/logo-neuronup-core.svg"
+            url: labels.imageLogoPlaceholder,
           }
         }
       },
       {
         "@type": "WebPage",
-        url: url || "### URL ###",
+        url: url || labels.urlPlaceholder,
         mainEntityOfPage: {
           "@type": "WebSite",
           name: "NeuronUP",
@@ -87,7 +109,7 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
           "@type": "MedicalOrganization",
           name: "NeuronUP",
           url: "https://neuronup.com",
-          logo: "https://neuronup.com/wp-content/uploads/2021/07/logo-neuronup-core.svg",
+          logo: labels.imageLogoPlaceholder,
           sameAs: [
             "https://www.facebook.com/NeuronUP",
             "https://x.com/NeuronUP",
@@ -98,10 +120,10 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
           contactPoint: [
             {
               "@type": "ContactPoint",
-              telephone: ["+34-941-123-456", "+44-203-695-8524"],
-              contactType: ["Customer Service", "Sales"],
+              telephone: labels.telephonePlaceholder,
+              contactType: [ "Customer Service", "Sales"],
               areaServed: "Worldwide",
-              availableLanguage: ["es", "en", "fr", "pt"],
+              availableLanguage: labels.availableLanguage,
               email: "soporte@neuronup.com"
             }
           ],
@@ -118,22 +140,26 @@ export const SchemaOutput: React.FC<SchemaOutputProps> = ({ formData, imageDimen
     ]
   };
 
-  // Se genera la cadena final formateada
-  const schemaStringRaw = `<script type="application/ld+json">\n${JSON.stringify(schemaObject, null, 2)}\n</script>`;
-
+  const schemaStringRaw = `<script type="application/ld+json">\n${JSON.stringify(
+    schemaObject,
+    null,
+    2
+  )}\n</script>`;
   const schemaString = schemaStringRaw
-  .replace(
-    /("telephone": )\[\s+([^\]]+?)\s+\]/g,
-    (_match, key, value) => `${key}[ ${value.replace(/\s+/g, " ")} ]`
-  )
-  .replace(
-    /("availableLanguage": )\[\s+([^\]]+?)\s+\]/g,
-    (_match, key, value) => `${key}[ ${value.replace(/\s+/g, " ")} ]`
-  );
+    .replace(
+      /("telephone": )\[\s+([^\]]+?)\s+\]/g,
+      (_match, key, value) =>
+        `${key}[ ${value.replace(/\s+/g, " ")} ]`
+    )
+    .replace(
+      /("availableLanguage": )\[\s+([^\]]+?)\s+\]/g,
+      (_match, key, value) =>
+        `${key}[ ${value.replace(/\s+/g, " ")} ]`
+    );
 
   return (
     <div className="SchemaOutput">
-      <h2>Código Schema Generado</h2>
+      <h2>{header}</h2>
       <pre>{schemaString}</pre>
     </div>
   );
